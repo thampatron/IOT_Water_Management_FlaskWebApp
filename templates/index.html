@@ -15,6 +15,7 @@
 {%endblock%}
 
 {%block style%}
+
 <style>#map {
   height: 500px;  /* The height is 400 pixels */
   width: 100%;  /* The width is the width of the web page */
@@ -23,7 +24,9 @@
 {%endblock%}
 
 {%block title%}
-<h1 style="float:left; font-size:36px; padding-top:35px">IoT Water Stress Management System</h1>
+<h1 style="float:left; font-size:36px; padding-left:30px;padding-top:35px">IoT Water Stress Management System</h1>
+<h2>Next Irrigation:  </h2>
+<h1 id="irrigation">Today</h1>
 {%endblock%}
 {% block map %}
 <div id="map"></div>
@@ -39,34 +42,228 @@
 
 {%block mapScript%}
 <script>
+function addNode(){
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position){
+            var temp = position;
+            $.post("addnode", temp, function(){
+            });
+            event.preventDefault();
+            }
+        );
+    }
+    else{
+        console.log("Geolocation API is not supported");
+    }
+}
 
+
+var uluru = [-25.344, 130.336];
+      var uluru1 = [-25.144, 130.036];
+      var uluru2 = [ -25.194, 130.936];
+      var uluru3 = [ -24.844, 130.536];
+      var uluru4 = [ -25.544, 130.236];
+      var position = [];
+      var points = [];
+      var rectangle;
+      var bounds = {
+                    north: -25.044,
+                    south: -25.194,
+                    east: 130.1,
+                    west: 130.01
+                };
+    
     function initMap() {
-      // The location of Uluru
-      var uluru = {lat: -25.344, lng: 131.036};
+      // The location of Uluru (lat,lng)
+      
       // The map, centered at Uluru
       var map = new google.maps.Map(
-          document.getElementById('map'), {zoom: 4, center: uluru});
+          document.getElementById('map'), {zoom: 6, center: {lat:-25.344,lng: 131.036}});
       // The marker, positioned at Uluru
-      var marker = new google.maps.Marker({position: uluru, map: map});
-      var contentStrin = '<progress  style="margin-top: 30px; line-width:600px; -webkit-transform: rotate(-90deg);" max=100 min=0value=45></progress>';
-      var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="height: 60%;"><span class="sr-only">60% Complete</span></div></div><h1>NodeID 4 <br /><br />Water State</h1></div></body>'
-      var infowindow = new google.maps.InfoWindow({
-          content: contentString
-        });
+      var markers = [];
+      var infowindows = [];
+      var state = [];
+      var colo = [];
+      var i;
+      for(i=0; i<5;i++){
+      if(data[i][9]>60){
+                state[i] = 'Excess';
+                colo[i] = 'rgba(0, 100, 200)';
+            }
+            else if(data[i][9]>20 && data[0][9]<60){
+                state[i] = 'Optimal';
+                colo[i] = 'rgba(0, 100, 100)';
+            }
+            else{
+                state[i] = 'Stress';
+                colo[i] = 'rgba(255, 100, 200)';
+            }
+      }
 
-        var marker = new google.maps.Marker({
-          position: uluru,
-          map: map,
-          title: 'Uluru (Ayers Rock)'
-        });
-        marker.addListener('click', function() {
-          infowindow.open(map, marker);
-        });
+      var contentString=['<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[0][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 0 <br /><br />Water State: <h1 id="node_state" style="color:'+colo[0]+'">'+state[0]+'</h1></h1></div></body>'
+              ,'<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[1][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 0 <br /><br />Water State: <h1 id="node_state" style="color:'+colo[1]+'">'+state[1]+'</h1></h1></div></body>'
+                ,'<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[2][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 2 <br /><br />Water State: <h1 id="node_state" style="color:'+colo[2]+'">'+state[2]+'</h1></h1></div></body>'
+            ,'<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[3][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 3 <br /><br />Water State: <h1 id="node_state" style="color:'+colo[3]+'">'+state[3]+'</h1></h1></div></body>'
+            ,'<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[4][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 4 <br /><br />Water State: <h1 id="node_state" style="color:'+colo[4]+'">'+state[4]+'</h1></h1></div></body>'];
+      
+      
+      i=0;
+      for(i=0; i<5;i++){
+          
+                if(!i){
+                  position[0] = uluru[0];  
+                  position[1] = uluru[1]; 
+                  //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 0 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                else if(i==1){
+                    position[0] = uluru1[0]; 
+                    position[1] = uluru1[1]; 
+                    //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 1 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                else if(i==2){
+                    position[0] = uluru2[0]; 
+                    position[1] = uluru2[1]; 
+                    //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 2 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                else if(i==3){
+                    position[0] = uluru3[0]; 
+                    position[1] = uluru3[1]; 
+                    //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 2 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                else{
+                    position[0] = uluru4[0]; 
+                    position[1] = uluru4[1];
+                    //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 3 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                var marker = new google.maps.Marker({
+                position: new google.maps.LatLng(position[0],position[1]),
+                map: map,
+                title: i.toString()
+                });
+                (function(marker,i){
+                    google.maps.event.addListener(marker,'click',function(){
+                            infowindow = new google.maps.InfoWindow({
+                            content : contentString[i]
+                        })
+                        infowindow.open(map,marker);
+                    });
+                })(marker,i);
+                }
+                var points = [];
+
+                for(i=0;i<5;i++){
+                    if(!i){
+                  position[0] = uluru[0];  
+                  position[1] = uluru[1]; 
+                  //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 0 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                else if(i==1){
+                    position[0] = uluru1[0]; 
+                    position[1] = uluru1[1]; 
+                    //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 1 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                else if(i==2){
+                    position[0] = uluru2[0]; 
+                    position[1] = uluru2[1]; 
+                    //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 2 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                else if(i==3){
+                    position[0] = uluru3[0]; 
+                    position[1] = uluru3[1]; 
+                    //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 2 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                else{
+                    position[0] = uluru4[0]; 
+                    position[1] = uluru4[1];
+                    //var contentString ='<head><style>.progress-bar-vertical {width: 30px;min-height: 100px;margin-right: 20px;float: left;display: -webkit-box;  display: -webkit-flex; display: flex;         /* NEW, Spec - Firefox, Chrome, Opera */align-items: flex-end;-webkit-align-items: flex-end; /* Safari 7.0+ */}.progress-bar-vertical .progress-bar {width: 100%;height: 0;-webkit-transition: height 0.6s ease;-o-transition: height 0.6s ease;transition: height 0.6s ease;}</style></head><body><div style="width:150px;"><div class="progress progress-bar-vertical"><div class="progress-bar" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="height:'+data[i][9]+'%;"><span class="sr-only">50% Complete</span></div></div><h1>NodeID 3 <br /><br />Water State: <h1 id="node_state" style="color:'+colo+'">'+state+'</h1></h1></div></body>';
+                }
+                    for (var j=data[i][9];j>-1;j--){
+                        points.push(new google.maps.LatLng(position[0],position[1]));
+                        points.push(new google.maps.LatLng(position[0],position[1])); 
+                    }
+                    
+                }
+                var gradient = [
+"rgba(255, 50, 0, 0)",
+"rgba(240, 100, 0, 1)",
+"rgba(221, 130, 102, 1)",
+"rgba(193, 140, 147, 1)",
+"rgba(147, 160, 193, 1)",
+"rgba(102, 180, 238, 1)",
+"rgba(0, 160, 249, 1)",
+"rgba(0, 140, 255, 1)",
+"rgba(0, 113, 255, 1)",
+"rgba(0, 57, 255, 1)",
+"rgba(0, 0, 255, 1)"
+
+        ]
+            heatmap = new google.maps.visualization.HeatmapLayer({
+                data: points,
+                map: map,
+                radius: 200,
+                gradient: gradient 
+                });
+            var bounds = {
+                    north: -25.044,
+                    south: -25.194,
+                    east: 130.1,
+                    west: 130.01
+                };
+            rectangle = new google.maps.Rectangle({
+                bounds: bounds,
+                editable: true,
+                draggable:true
+                });
+        rectangle.setMap(map);
+
+        rectangle.addListener('bounds_changed', showNewRect);
+        
     }
+
+    
+    function toggleHeatmap() {
+            heatmap.setMap(heatmap.getMap() ? null : map);
+      }
+
+      function changeGradient() {
+        var gradient = [
+        'rgba(255, 0, 0, 1)',
+        'rgba(191, 0, 31, 1)',
+        'rgba(127, 0, 63, 1)',
+        'rgba(63, 0, 91, 1)',
+        'rgba(0, 0, 127, 1)',
+        'rgba(0, 0, 159, 1)',
+        'rgba(0, 0, 191, 1)',
+        'rgba(0, 0, 223, 1)',
+        'rgba(0, 0, 255, 1)',
+        'rgba(0, 63, 255, 1)',
+        'rgba(0, 127, 255, 1)',
+        'rgba(0, 191, 255, 1)',
+        'rgba(0, 255, 255, 1)',
+        'rgba(0, 255, 255, 0)'
+        ]
+        heatmap.set('gradient', heatmap.get('gradient') ? null : gradient);
+      }
+
+      function changeRadius() {
+        heatmap.set('radius', heatmap.get('radius') ? null : 20);
+      }
+
+      function changeOpacity() {
+        heatmap.set('opacity', heatmap.get('opacity') ? null : 0.2);
+      }
+
+                
+    function getPoints(){
+        return points;
+    }
+    
+    
       </script> 
 
 <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnJ9wRoBlPgi64Ny99kUDzw918x87cSms&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnJ9wRoBlPgi64Ny99kUDzw918x87cSms&callback=initMap&libraries=visualization">
     </script>
 {%endblock%}
 
@@ -101,7 +298,7 @@ $(document).ready(function(){
     )
 </script>
 <form id="dateForm" method="POST" action="/changedate">
-<select id="dateSel" name="date" onchange="$('#dateForm').submit()"; style=" margin-left:30px; margin-right:10px;margin-top:25px" >
+<select id="dateSel" name="date" onchange="$('#dateForm').submit()"; style=" margin-left:30px; margin-right:1px;margin-top:25px" >
         <option id="Day"  value="Day">Last Day</option>
         <option id="Month"value="Month">Last Month</option>
         <option id="Year" value="Year">Last Year</option>
@@ -109,24 +306,97 @@ $(document).ready(function(){
         </select>
     </form>
 
-<canvas id="myChart" width="400" height="90"></canvas>
+<canvas id="chart" width="400" height="90"></canvas>
 
 <script>
-    
+    var uluru = [-25.344, 130.336];
+      var uluru1 = [-25.144, 130.036];
+      var uluru2 = [ -25.194, 130.936];
+      var uluru3 = [ -24.844, 130.536];
+      var uluru4 = [ -25.544, 130.236];
+   
+      var bounds = {
+                    north: -25.044,
+                    south: -25.194,
+                    east: 130.1,
+                    west: 130.01
+                };
+    function inBounds(lat,lng){
+            if(lng > bounds['west'] && lng<bounds['east']){
+                if(lat> bounds['south'] && lat < bounds['north']){
+                    return true;
+                }
+            }
+            return false;
+        }  
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min ;
+  return time;
+}  
+    function setNextIrrigationDate(mdata){
+        var yone = mdata[9];
+        var ytwo = mdata[8];
+        var grad = (yone - ytwo)/(900000)
+        var xone = new Date().getTime()
+        var c = yone - grad*xone
+        var intercept = (20-c)/grad
+        document.getElementById("irrigation").innerHTML = '  ' + timeConverter(intercept);
+        console.log(timeConverter(intercept));
+    };
+
+    function getData(){
+            var temp = [];
+            var out = [];
+            if(inBounds(uluru[0],uluru[1])){
+                temp.push(data[0]);
+            }
+            if(inBounds(uluru1[0],uluru1[1])){
+                temp.push(data[1]);
+            }
+            if(inBounds(uluru2[0],uluru2[1])){
+                temp.push(data[2]);
+            }
+            if(inBounds(uluru3[0],uluru3[1])){
+                temp.push(data[3]);
+            }
+            if(inBounds(uluru4[0],uluru4[1])){
+                temp.push(data[4]);
+            }
+            
+            for(var j =0; j<10;j++){
+                var avg = 0;
+                for(var k=0; k<temp.length;k++){
+                    avg+=temp[k][j];
+                }
+                out.push(avg/temp.length);
+                
+            }
+            return out;
+        }
+      
         var labels = {{labels|tojson}};
         var data = {{data|tojson}};
-        var ctx = document.getElementById('myChart').getContext('2d');
-        var myChart = new Chart(ctx, {
+        var chart_data = getData();
+        var ctx = document.getElementById('chart').getContext('2d');
+        var chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Soil Moisture Level',
-                    data: data,
+                    label: 'Volumetric Water Content',
+                    data: chart_data,
                     
                     borderWidth: 1
                 },{
-                    label: 'Too Wet',
+                    label: 'Excess',
                     backgroundColor: 'rgba(0, 100, 200, 0.2)',
                 borderColor: 'rgba(255, 100, 200, 0.0)',
 
@@ -171,7 +441,7 @@ $(document).ready(function(){
                 xScaleID: 'x-axis-0',
                 mode: "horizontal",
                 yMin: 0,
-                yMax: 2,
+                yMax: 20,
                 backgroundColor: 'rgba(255, 100, 200, 0.2)',
                 borderColor: 'rgba(0, 100, 200, 0.0)',
                 
@@ -183,8 +453,8 @@ $(document).ready(function(){
                 yScaleID: 'y-axis-0',
                 xScaleID: 'x-axis-0',
                 mode: "horizontal",
-                yMin: 2,
-                yMax: 6,
+                yMin: 20,
+                yMax: 60,
                 backgroundColor: 'rgba(0, 100, 100,0.2)',
                 borderColor: 'rgba(255, 100, 100, 0.0)',
                 
@@ -195,8 +465,8 @@ $(document).ready(function(){
                 mode: "horizontal",
                 yScaleID: 'y-axis-0',
                 xScaleID: 'x-axis-0',
-                yMin: 6,
-                yMax: 8,
+                yMin: 60,
+                yMax: 100,
                 backgroundColor: 'rgba(0, 100, 200, 0.2)',
                 borderColor: 'rgba(255, 100, 200, 0.0)',
                 
@@ -204,5 +474,120 @@ $(document).ready(function(){
             }]
     }
         }});
+
+        function updateChart(mdata){
+        
+        chart.destroy();
+        setNextIrrigationDate(mdata);
+        var ctx = document.getElementById('chart').getContext('2d');
+        var mchart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Volumetric Water Content',
+                    data: mdata,
+                    
+                    borderWidth: 1
+                },{
+                    label: 'Excess',
+                    backgroundColor: 'rgba(0, 100, 200, 0.2)',
+                borderColor: 'rgba(255, 100, 200, 0.0)',
+
+                },
+                {
+                    label: 'Optimal',
+                    backgroundColor:'rgba(0, 100, 100,0.2)',
+                borderColor: 'rgba(255, 100, 100, 0.0)',
+
+                }
+                ,{
+                    label: 'Stress',
+                    backgroundColor: 'rgba(255, 100, 200, 0.2)',
+                borderColor: 'rgba(0, 100, 200, 0.0)',
+                    
+                }
+            ]
+            },
+            options: {
+                title: {
+                display: false,
+                text: 'Soil Moisture Levels'
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+                tooltips: {
+                    mode: "index",
+                    intersect: true
+                },
+            annotation: {
+      
+            annotations: [{
+                drawTime: "afterDatasetsDraw",
+                id: 'box1',
+                type: 'box',
+                yScaleID: 'y-axis-0',
+                xScaleID: 'x-axis-0',
+                mode: "horizontal",
+                yMin: 0,
+                yMax: 20,
+                backgroundColor: 'rgba(255, 100, 200, 0.2)',
+                borderColor: 'rgba(0, 100, 200, 0.0)',
+                
+                
+            },{
+                drawTime: "afterDatasetsDraw",
+                id: 'box2',
+                type: 'box',
+                yScaleID: 'y-axis-0',
+                xScaleID: 'x-axis-0',
+                mode: "horizontal",
+                yMin: 20,
+                yMax: 60,
+                backgroundColor: 'rgba(0, 100, 100,0.2)',
+                borderColor: 'rgba(255, 100, 100, 0.0)',
+                
+            },{
+                drawTime: "afterDatasetsDraw",
+                id: 'box3',
+                type: 'box',
+                mode: "horizontal",
+                yScaleID: 'y-axis-0',
+                xScaleID: 'x-axis-0',
+                yMin: 60,
+                yMax: 100,
+                backgroundColor: 'rgba(0, 100, 200, 0.2)',
+                borderColor: 'rgba(255, 100, 200, 0.0)',
+                
+                
+            }]
+    }
+        }});
+    }
+
+    var mdata = [];
+    function showNewRect(event){
+        var ne = rectangle.getBounds().getNorthEast();
+        var sw = rectangle.getBounds().getSouthWest();
+        console.log(ne.lat());
+        console.log(sw.lat());
+        console.log(ne.lng());
+        console.log(sw.lng());
+        //var nw = rectangle.getBounds().getNorthWest();
+        //var se = rectangle.getBounds().getSouthEast();
+        bounds['north'] = ne.lat();
+        bounds['east'] = ne.lng();
+        bounds['south'] = sw.lat();
+        bounds['west'] = sw.lng();
+        mdata = getData();
+        console.log('hello');
+        updateChart(mdata);
+        
+    }
         </script>
 {%endblock%}

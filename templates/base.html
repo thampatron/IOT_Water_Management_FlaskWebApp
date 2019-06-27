@@ -25,31 +25,34 @@
 
 <body >
        
-    <section class="hero is-primary" style="height:100px; background-color:#00c6d1">
+    <section class="hero is-primary" style="height:150px; background-color:#02b662">
+            <img  style="padding-left:10px;padding-top:10px" height="130" width="130" src="static/logo.png" alt="Italian Trulli">
 
-        <div class="hero-head">
+        <div style="margin-top:-120px" class="hero-head">
             <nav class="navbar">
                 <div class="container">
+                        
                         {%block title%}
                         {%endblock%}
                     <div id="navbarMenuHeroA" class="navbar-menu">
                         
                             <div class="navbar-end">
-                            <a href="{{ url_for('main.index') }}" class="navbar-item">
+                            <a href="{{ url_for('index') }}" class="navbar-item">
                                 Home
                             </a>
-                            <a href="{{ url_for('main.profile') }}" class="navbar-item">
+                            <a href="{{ url_for('profile') }}" class="navbar-item">
                                 Profile
                             </a>
-                            <a href="{{ url_for('auth.login') }}" class="navbar-item">
+                            <a href="{{ url_for('login') }}" class="navbar-item">
                                 Login
                             </a>
-                            <a href="{{ url_for('auth.signup') }}" class="navbar-item">
+                            <a href="{{ url_for('signup') }}" class="navbar-item">
                                 Sign Up
                             </a>
-                            <a href="{{ url_for('auth.logout') }}" class="navbar-item">
+                            <a href="{{ url_for('logout') }}" class="navbar-item">
                                 Logout
                             </a>
+                            <button id="addnode" type="button" onclick="addNode()"  style="color:black; background-color:#FFFFFF">Add Node</button>
                         </div>
                     </div>
                 </div>

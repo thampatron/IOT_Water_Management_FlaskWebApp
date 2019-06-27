@@ -1,4 +1,6 @@
 Flask==0.10.1
 Werkzeug
 flask-login
-flask-sqlalchemy
+Flask-SQLAlchemy
+google-cloud-datastore
+gunicorn==19.6.0
